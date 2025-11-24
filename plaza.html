@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>WonDieWorld 0.6-side - Plaza</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ==== 하단 메이플 스타일 HUD ==== */
+    #bottomHud {
+      position: absolute;
+      left: 50%;
+      bottom: 16px;
+      transform: translateX(-50%);
+      width: min(960px, 100% - 40px);
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: rgba(8, 10, 25, 0.9);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      color: #f5f6fa;
+      font-size: 13px;
+      pointer-events: auto;
+      z-index: 20;
+    }
+
+    .hud-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .hud-left {
+      min-width: 130px;
+    }
+
+    .hud-center {
+      flex: 1;
+      gap: 8px;
+    }
+
+    .hud-right {
+      align-items: flex-end;
+      min-width: 210px;
+    }
+
+    .hud-nick {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      color: #ffeaa7;
+    }
+
+    .hud-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .hud-label {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .hud-value {
+      font-weight: 600;
+    }
+
+    .hud-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hud-bar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hud-bar-label {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .hud-bar-text {
+      font-size: 11px;
+      opacity: 0.9;
+    }
+
+    .hud-bar-track {
+      position: relative;
+      width: 100%;
+      height: 12px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    }
+
+    .hud-bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.12s ease-out;
+    }
+
+    .hud-bar-fill.hp {
+      background: linear-gradient(90deg, #ff7675, #e17055);
+    }
+
+    .hud-bar-fill.exp {
+      background: linear-gradient(90deg, #74b9ff, #0984e3);
+    }
+
+    .hud-keys {
+      font-size: 11px;
+      opacity: 0.85;
+      white-space: nowrap;
+    }
+
+    .hud-exit {
+      margin-top: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 12px;
+      background: linear-gradient(135deg, #636e72, #2d3436);
+      color: #f5f6fa;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+
+    .hud-exit:hover {
+      filter: brightness(1.05);
+    }
+
+    @media (max-width: 720px) {
+      #bottomHud {
+        flex-direction: column;
+        align-items: stretch;
+        border-radius: 18px;
+        padding: 10px 12px;
+        gap: 10px;
+      }
+      .hud-right {
+        align-items: flex-start;
+      }
+      .hud-keys {
+        white-space: normal;
+      }
+    }
+
+    /* 캔버스가 뷰 전체를 쓰도록 래퍼 */
+    body.screen-plaza {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    .game-wrapper {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    #gameCanvas {
+      background: #000;
+      max-width: 100%;
+      max-height: 100%;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
+<body class="screen screen-plaza">
+  <div class="game-wrapper">
+    <canvas id="gameCanvas" width="960" height="540"></canvas>
+
+    <!-- 하단 메이플 스타일 HUD -->
+    <div id="bottomHud">
+      <!-- 왼쪽: 닉네임 + 레벨 -->
+      <div class="hud-section hud-left">
+        <div id="hudNickname" class="hud-nick">닉네임: ???</div>
+        <div class="hud-row">
+          <span class="hud-label">LV</span>
+          <span id="hudLv" class="hud-value">1</span>
+        </div>
+      </div>
+
+      <!-- 중앙: HP / EXP 바 -->
+      <div class="hud-section hud-center">
+        <div class="hud-bar hp">
+          <div class="hud-bar-header">
+            <span class="hud-bar-label">HP</span>
+            <span id="hudHp" class="hud-bar-text">5 / 5</span>
+          </div>
+          <div class="hud-bar-track">
+            <div id="hpBarFill" class="hud-bar-fill hp"></div>
+          </div>
+        </div>
+
+        <div class="hud-bar exp">
+          <div class="hud-bar-header">
+            <span class="hud-bar-label">EXP</span>
+            <span id="hudExp" class="hud-bar-text">0 / 10</span>
+          </div>
+          <div class="hud-bar-track">
+            <div id="expBarFill" class="hud-bar-fill exp"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 조작 설명 + 나가기 -->
+      <div class="hud-section hud-right">
+        <div class="hud-keys">
+          ←/→ 또는 A/D : 이동 · ↑/W/Space : 점프 · J : 공격
+        </div>
+        <button id="btnBack" class="hud-exit">나가기</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sprite.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
